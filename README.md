@@ -1,4 +1,4 @@
-![](sample-image.png)
+![](samplegif.gif)
 # YoutubeWithResponsiveIFrame
 
 In this demo i have used iframe and shown youtube video which is responsive.
