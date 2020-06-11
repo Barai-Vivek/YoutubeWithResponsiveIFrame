@@ -1,4 +1,7 @@
-![](samplegif.gif)
+<b>Using iframe</b><br><br>
+Common youtube player             |  Customize youtube player with controls
+:-------------------------:|:-------------------------:
+![](samplegif.gif) | ![](samplegif2.gif)
 # YoutubeWithResponsiveIFrame
 
 In this demo i have used iframe and shown youtube video which is responsive.
