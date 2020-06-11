@@ -1,5 +1,6 @@
 package com.app.youtubewithiframe.UtilsForYT;
 
+import android.net.Uri;
 import android.view.View;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -17,10 +18,9 @@ public class myWebViewClient extends WebViewClient {
 
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, String url) {
-        if (progressBarVideo != null)
-            progressBarVideo.setVisibility(View.VISIBLE);
-        if (webViewFeed != null)
-            webViewFeed.setVisibility(View.VISIBLE);
+        if (url != null && !url.isEmpty() && Uri.parse(url).getScheme().equalsIgnoreCase("embed")) {
+            return true;
+        }
         return super.shouldOverrideUrlLoading(view, url);    //To change body of overridden methods use File | Settings | File Templates.
     }
 

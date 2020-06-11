@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <meta charset="utf-8"/>
+    <meta name="viewport"
+          content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, width=device-width"/>
+    <script src="https://www.youtube.com/iframe_api"></script>
+</head>
+<body style='margin:0px;padding:0px;'>
+$$STYLE$$
+<div class="video-container">
+    <div id="player"></div>
+</div>
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+        var player;
+        var iframe;
+        var error = false;
+
+        function invoke(command) {
+            iframe.contentWindow.postMessage(JSON.stringify({ "event": "inject", "command": command }), "*");
+        }
+
+        var playbackState = 0;
+        var duration = 0.0;
+        var position = 0.0;
+        var downloadProgress = 0.0;
+        var quality = "";
+        var availableQualities = "";
+        var failed = false;
+        var autostarted = false;
+        var storyboardSpec = ""
+
+        YT.ready(function() {
+            player = new YT.Player("player", %@);
+            player.setSize(window.innerWidth, window.innerHeight);
+
+            function getCurrentTime() {
+                 downloadProgress = player.getVideoLoadedFraction();
+                 position = player.getCurrentTime();
+                 storyboardSpec = player.getStoryboardFormat();
+
+                 updateState();
+                 invoke("tick");
+            }
+
+            window.setInterval(getCurrentTime, 500);
+            invoke("initialize");
+        });
+
+        function play() {
+            player.playVideo();
+        }
+
+        function pause() {
+            player.pauseVideo();
+        }
+
+        function seek(timestamp) {
+            player.seekTo(timestamp, true);
+        }
+
+        function updateState() {
+            window.location.href = "embed://onState?failed=" + failed + "&playback=" + playbackState + "&position=" + position + "&duration=" + duration + "&download=" + downloadProgress + '&quality=' + quality + '&availableQualities=' + availableQualities + '&storyboard=' + storyboardSpec;
+        }
+
+        function onReady(event) {
+            window.location.href = "embed://onReady?data=" + event.data;
+            iframe = document.getElementById("player");
+            duration = player.getDuration();
+            invoke("tick");
+        }
+
+        function onStateChange(event) {
+            if (!error) {
+                playbackState = event.data;
+                updateState();
+            }
+            else {
+                error = false;
+            }
+        }
+
+        function onPlaybackQualityChange(event) {
+            quality = event.data;
+            updateState();
+        }
+
+        function onPlayerError(event) {
+            if (event.data == 100) {
+                error = true;
+            }
+            else if (event.data == 150) {
+                failed = true;
+            }
+            updateState();
+        }
+
+        window.onresize = function() {
+            player.setSize(window.innerWidth, window.innerHeight);
+        }
+
+</script>
+</body>
+</html>

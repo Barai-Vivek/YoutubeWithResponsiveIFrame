@@ -1,11 +1,10 @@
 package com.app.youtubewithiframe;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -14,10 +13,14 @@ import android.webkit.WebView;
 import android.widget.ProgressBar;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 
 import com.app.youtubewithiframe.UtilsForYT.ChromeClient;
 import com.app.youtubewithiframe.UtilsForYT.myWebViewClient;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -49,14 +52,14 @@ public class MainActivity extends AppCompatActivity {
         webviewProgress = findViewById(R.id.webviewProgress);
 
 
-        loadYoutubeVideo(webView, "VIDEO_ID", webviewProgress);
+        loadYoutubeVideo(webView, "p3kWAyUSNsU", webviewProgress);
     }
 
 
     public void loadYoutubeVideo(WebView feedVideoWebView, String videoUrl, ProgressBar webviewProgress) {
         //you can also change height in percentage as per your screen.
         //this height refers to padding from bottom of screen.
-        final String frameVideo = generateResponsiveLinkForYoutubeIframe(videoUrl,  "61");
+        final String frameVideo = generateResponsiveLinkForYoutubeIframe(videoUrl, "61");
         System.out.println("Something with session frameVideo - " + videoUrl);
 
         myWebViewClient mWebViewClient = new myWebViewClient(webviewProgress, feedVideoWebView);
@@ -75,37 +78,71 @@ public class MainActivity extends AppCompatActivity {
         feedVideoWebView.getSettings().setLoadWithOverviewMode(true);
         feedVideoWebView.getSettings().setUseWideViewPort(true);
 
-        feedVideoWebView.loadDataWithBaseURL(null, frameVideo, "text/html", "utf-8", null);
+        feedVideoWebView.loadDataWithBaseURL("https://youtube.com/", frameVideo, "text/html", "utf-8", null);
     }
 
     public String generateResponsiveLinkForYoutubeIframe(String videoUrl, String heightPercent) {
-        String head = "<head>" +
-                "<meta http-equiv=\"X-UA-Compatible\" content=\"IE=Edge\" />" +
-                "<meta charset=\"utf-8\" />" +
-                "<meta name=\"viewport\" content=\"user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, width=device-width\" />" +
-                "<script src=\"https://www.youtube.com/iframe_api\"></script>" +
-                "</head>";
-        return "<html>" + head + "<body style='margin:0px;padding:0px;'><script type='text/javascript'" +
-                "src='https://www.youtube.com/iframe_api'></script><script type='text/javascript'>" +
-                "function onYouTubeIframeAPIReady(){ytplayer=new YT.Player('playerId'," +
-                "{events:{onReady:onPlayerReady}})}function onPlayerReady(a){a.target.playVideo();}" +
-                "</script><style>" +
-                ".video-container {" +
-                "position: relative;" +
-                "padding-bottom: " + heightPercent + "%;" +
-                "padding-top: 35px;" +
-                "height: 0;" +
-                "overflow: hidden;" +
-                "}" +
-                ".video-container iframe {" +
-                "position: absolute;" +
-                "top:0;" +
-                "left: 0;" +
-                "width: 100%; " +
-                "height: 100%;}" +
-                "</style><div class='video-container'>" +
-                "<iframe id='playerId' type='text/html' src='https://www.youtube.com/embed/" + videoUrl + "?enablejsapi=1&rel=0&showinfo=0&playsinline=1&autoplay=1&modestbranding=1&version=3' frameborder='0' allowFullScreen='allowFullScreen'>" +
-                "</div></body></html>";
+        String responsiveStyle = "<style>\n" +
+                "    .video-container {position: relative;padding-bottom: "+heightPercent+"%;padding-top: 35px;height: 0;overflow: hidden;}.video-container iframe {position: absolute;top:0;left: 0;width: 100%; height: 100%;}\n" +
+                "</style>";
+
+        String htmlParams = "{" +
+                "\"videoId\": \"" + videoUrl + "\"," +
+                "\"width\": \"100%\"," +
+                "\"height\": \"100%\"," +
+                "\"events\": {" +
+                "\"onReady\": \"onReady\"," +
+                "\"onStateChange\": \"onStateChange\"," +
+                "\"onPlaybackQualityChange\": \"onPlaybackQualityChange\"," +
+                "\"onError\":\"onPlayerError\"" +
+                "}," +
+                "\"playerVars\": {" +
+                "\"cc_load_policy\": 1," +
+                "\"iv_load_policy\": 3," +
+                "\"controls\": 1," +
+                "\"playsinline\": 1," +
+                "\"autohide\": 1," +
+                "\"showinfo\": 0," +
+                "\"rel\": 0," +
+                "\"modestbranding\":1," +
+                "\"start\":0" +
+                "  }" +
+                "}";
+
+        String rawHtml = loadAssetTextAsString(MainActivity.this, "CommonYoutube.html");
+        return rawHtml.replaceAll("%@", htmlParams).replace("$$STYLE$$", responsiveStyle);
+    }
+
+    private String loadAssetTextAsString(Context context, String name) {
+        BufferedReader in = null;
+        try {
+            StringBuilder buf = new StringBuilder();
+            InputStream is = context.getAssets().open(name);
+            in = new BufferedReader(new InputStreamReader(is));
+
+            String str;
+            boolean isFirst = true;
+            while ((str = in.readLine()) != null) {
+                if (isFirst)
+                    isFirst = false;
+                else
+                    buf.append('\n');
+                buf.append(str);
+            }
+            return buf.toString();
+        } catch (IOException e) {
+            Log.e("Responsive", "Error opening asset " + name);
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    Log.e("Responsive", "Error closing asset " + name);
+                }
+            }
+        }
+
+        return null;
     }
 
 }
